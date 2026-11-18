@@ -1,9 +1,13 @@
 
--- Anime Crusaders | Auto Relight GUI
--- START / STOP + Counter + Draggable Menu
+--==================================================
+-- AUTO RELIGHT | by.Wuang
+-- Anime Crusaders
+--==================================================
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
 local player = Players.LocalPlayer
 
 if not fireproximityprompt then
@@ -13,18 +17,19 @@ end
 
 -- Remove old GUI
 pcall(function()
-    game:GetService("CoreGui"):FindFirstChild("AutoRelightGUI"):Destroy()
+    CoreGui:FindFirstChild("AutoRelightGUI"):Destroy()
 end)
 
+-- GUI
 local gui = Instance.new("ScreenGui")
 gui.Name = "AutoRelightGUI"
 gui.ResetOnSpawn = false
 
-pcall(function()
-    gui.Parent = game:GetService("CoreGui")
+local success = pcall(function()
+    gui.Parent = CoreGui
 end)
 
-if not gui.Parent then
+if not success or not gui.Parent then
     gui.Parent = player:WaitForChild("PlayerGui")
 end
 
@@ -39,16 +44,18 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = frame
 
+-- Title
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -35, 0, 35)
 title.Position = UDim2.fromOffset(10, 0)
 title.BackgroundTransparency = 1
 title.Text = "RELIGHT BY.WUANG"
 title.TextColor3 = Color3.new(1, 1, 1)
-title.TextSize = 16
+title.TextSize = 14
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
 
+-- Close
 local close = Instance.new("TextButton")
 close.Size = UDim2.fromOffset(30, 30)
 close.Position = UDim2.new(1, -32, 0, 2)
@@ -58,6 +65,7 @@ close.BackgroundTransparency = 1
 close.TextSize = 16
 close.Parent = frame
 
+-- Status
 local status = Instance.new("TextLabel")
 status.Size = UDim2.new(1, -20, 0, 25)
 status.Position = UDim2.fromOffset(10, 40)
@@ -68,6 +76,7 @@ status.Font = Enum.Font.Gotham
 status.TextSize = 13
 status.Parent = frame
 
+-- Counter
 local counter = Instance.new("TextLabel")
 counter.Size = UDim2.new(1, -20, 0, 22)
 counter.Position = UDim2.fromOffset(10, 65)
@@ -78,6 +87,7 @@ counter.Font = Enum.Font.Gotham
 counter.TextSize = 13
 counter.Parent = frame
 
+-- START
 local start = Instance.new("TextButton")
 start.Size = UDim2.fromOffset(95, 38)
 start.Position = UDim2.fromOffset(12, 105)
@@ -88,6 +98,7 @@ start.Font = Enum.Font.GothamBold
 start.TextSize = 14
 start.Parent = frame
 
+-- STOP
 local stop = Instance.new("TextButton")
 stop.Size = UDim2.fromOffset(95, 38)
 stop.Position = UDim2.fromOffset(123, 105)
@@ -104,12 +115,15 @@ for _, button in ipairs({start, stop}) do
     c.Parent = button
 end
 
--- Drag menu
-local dragging, dragStart, startPos
+-- Drag GUI
+local dragging = false
+local dragStart
+local startPos
 
 title.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
+
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
@@ -121,7 +135,9 @@ UserInputService.InputChanged:Connect(function(input)
         input.UserInputType == Enum.UserInputType.MouseMovement
         or input.UserInputType == Enum.UserInputType.Touch
     ) then
+
         local delta = input.Position - dragStart
+
         frame.Position = UDim2.new(
             startPos.X.Scale,
             startPos.X.Offset + delta.X,
@@ -138,19 +154,25 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Automation
+--==================================================
+-- AUTO RELIGHT SYSTEM
+--==================================================
+
 local running = false
 local busy = false
 local processed = {}
 local completed = 0
 
 local function updateUI()
-    status.Text = running and "Status: ON" or "Status: OFF"
-    status.TextColor3 = running
-        and Color3.fromRGB(80, 230, 120)
-        or Color3.fromRGB(255, 100, 100)
-
     counter.Text = "Torches: " .. completed .. " / 8"
+
+    if running then
+        status.Text = "Status: ON"
+        status.TextColor3 = Color3.fromRGB(80, 230, 120)
+    else
+        status.Text = "Status: OFF"
+        status.TextColor3 = Color3.fromRGB(255, 100, 100)
+    end
 end
 
 local function getRoot()
@@ -167,6 +189,7 @@ local function findTorches()
             and v.Parent
             and v.Parent:IsA("BasePart")
             and not processed[v] then
+
             table.insert(found, v)
         end
     end
@@ -175,8 +198,13 @@ local function findTorches()
 end
 
 local function processTorch(prompt)
-    if not running or busy or processed[prompt] then return end
-    if not prompt.Parent or not prompt.Enabled then return end
+    if not running or busy or processed[prompt] then
+        return
+    end
+
+    if not prompt.Parent or not prompt.Enabled then
+        return
+    end
 
     busy = true
 
@@ -193,7 +221,9 @@ local function processTorch(prompt)
 
         processed[prompt] = true
         completed += 1
+
         updateUI()
+        print("Relight:", completed, "/ 8")
     end)
 
     if not success then
@@ -203,8 +233,13 @@ local function processTorch(prompt)
     busy = false
 end
 
+-- START
 start.MouseButton1Click:Connect(function()
     if running then return end
+
+    -- RESET FOR NEW ROUND
+    completed = 0
+    processed = {}
 
     running = true
     updateUI()
@@ -212,7 +247,10 @@ start.MouseButton1Click:Connect(function()
     task.spawn(function()
         while running and completed < 8 do
             for _, prompt in ipairs(findTorches()) do
-                if not running or completed >= 8 then break end
+                if not running or completed >= 8 then
+                    break
+                end
+
                 processTorch(prompt)
             end
 
@@ -223,19 +261,23 @@ start.MouseButton1Click:Connect(function()
             running = false
             updateUI()
             status.Text = "Status: COMPLETE!"
+            print("All 8 torch prompts processed!")
         end
     end)
 end)
 
+-- STOP
 stop.MouseButton1Click:Connect(function()
     running = false
     updateUI()
 end)
 
+-- CLOSE
 close.MouseButton1Click:Connect(function()
     running = false
     gui:Destroy()
 end)
 
 updateUI()
-print("Auto Relight GUI loaded!")
+
+print("AUTO RELIGHT | by.Wuang loaded!")
