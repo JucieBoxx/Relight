@@ -2,6 +2,7 @@
 --==================================================
 -- AUTO RELIGHT | by.Wuang
 -- Anime Crusaders
+-- Continuous Auto Relight
 --==================================================
 
 local Players = game:GetService("Players")
@@ -11,16 +12,25 @@ local CoreGui = game:GetService("CoreGui")
 local player = Players.LocalPlayer
 
 if not fireproximityprompt then
-    warn("Executor không hỗ trợ fireproximityprompt!")
+    warn("Executor does not support fireproximityprompt!")
     return
 end
 
 -- Remove old GUI
 pcall(function()
-    CoreGui:FindFirstChild("AutoRelightGUI"):Destroy()
+    local old = CoreGui:FindFirstChild("AutoRelightGUI")
+    if old then old:Destroy() end
 end)
 
+pcall(function()
+    local old = player.PlayerGui:FindFirstChild("AutoRelightGUI")
+    if old then old:Destroy() end
+end)
+
+--==================================================
 -- GUI
+--==================================================
+
 local gui = Instance.new("ScreenGui")
 gui.Name = "AutoRelightGUI"
 gui.ResetOnSpawn = false
@@ -34,8 +44,8 @@ if not success or not gui.Parent then
 end
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(230, 155)
-frame.Position = UDim2.new(0.5, -115, 0.5, -77)
+frame.Size = UDim2.fromOffset(240, 160)
+frame.Position = UDim2.new(0.5, -120, 0.5, -80)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 frame.BorderSizePixel = 0
 frame.Parent = gui
@@ -44,18 +54,16 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = frame
 
--- Title
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -35, 0, 35)
 title.Position = UDim2.fromOffset(10, 0)
 title.BackgroundTransparency = 1
-title.Text = "RELIGHT BY.WUANG v1"
+title.Text = "RELIGHT BY.WUANG v2"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.TextSize = 14
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
 
--- Close
 local close = Instance.new("TextButton")
 close.Size = UDim2.fromOffset(30, 30)
 close.Position = UDim2.new(1, -32, 0, 2)
@@ -65,7 +73,6 @@ close.BackgroundTransparency = 1
 close.TextSize = 16
 close.Parent = frame
 
--- Status
 local status = Instance.new("TextLabel")
 status.Size = UDim2.new(1, -20, 0, 25)
 status.Position = UDim2.fromOffset(10, 40)
@@ -76,7 +83,6 @@ status.Font = Enum.Font.Gotham
 status.TextSize = 13
 status.Parent = frame
 
--- Counter
 local counter = Instance.new("TextLabel")
 counter.Size = UDim2.new(1, -20, 0, 22)
 counter.Position = UDim2.fromOffset(10, 65)
@@ -87,10 +93,9 @@ counter.Font = Enum.Font.Gotham
 counter.TextSize = 13
 counter.Parent = frame
 
--- START
 local start = Instance.new("TextButton")
-start.Size = UDim2.fromOffset(95, 38)
-start.Position = UDim2.fromOffset(12, 105)
+start.Size = UDim2.fromOffset(100, 38)
+start.Position = UDim2.fromOffset(12, 110)
 start.BackgroundColor3 = Color3.fromRGB(35, 160, 85)
 start.Text = "START"
 start.TextColor3 = Color3.new(1, 1, 1)
@@ -98,10 +103,9 @@ start.Font = Enum.Font.GothamBold
 start.TextSize = 14
 start.Parent = frame
 
--- STOP
 local stop = Instance.new("TextButton")
-stop.Size = UDim2.fromOffset(95, 38)
-stop.Position = UDim2.fromOffset(123, 105)
+stop.Size = UDim2.fromOffset(100, 38)
+stop.Position = UDim2.fromOffset(128, 110)
 stop.BackgroundColor3 = Color3.fromRGB(190, 55, 55)
 stop.Text = "STOP"
 stop.TextColor3 = Color3.new(1, 1, 1)
@@ -115,7 +119,10 @@ for _, button in ipairs({start, stop}) do
     c.Parent = button
 end
 
--- Drag GUI
+--==================================================
+-- DRAG GUI
+--==================================================
+
 local dragging = false
 local dragStart
 local startPos
@@ -123,7 +130,6 @@ local startPos
 title.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
-
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
@@ -135,9 +141,7 @@ UserInputService.InputChanged:Connect(function(input)
         input.UserInputType == Enum.UserInputType.MouseMovement
         or input.UserInputType == Enum.UserInputType.Touch
     ) then
-
         local delta = input.Position - dragStart
-
         frame.Position = UDim2.new(
             startPos.X.Scale,
             startPos.X.Offset + delta.X,
@@ -233,11 +237,13 @@ local function processTorch(prompt)
     busy = false
 end
 
--- START
+--==================================================
+-- START: RUN CONTINUOUSLY
+--==================================================
+
 start.MouseButton1Click:Connect(function()
     if running then return end
 
-    -- RESET FOR NEW ROUND
     completed = 0
     processed = {}
 
@@ -245,34 +251,43 @@ start.MouseButton1Click:Connect(function()
     updateUI()
 
     task.spawn(function()
-        while running and completed < 8 do
-            for _, prompt in ipairs(findTorches()) do
-                if not running or completed >= 8 then
-                    break
-                end
+        while running do
+            local torches = findTorches()
+
+            for _, prompt in ipairs(torches) do
+                if not running then break end
 
                 processTorch(prompt)
+
+                if completed >= 8 then
+                    print("8/8 COMPLETE!")
+
+                    task.wait(1)
+
+                    completed = 0
+                    processed = {}
+
+                    updateUI()
+
+                    print("Reset to 0/8. Waiting for next round...")
+                    break
+                end
             end
 
             task.wait(0.5)
         end
-
-        if completed >= 8 then
-            running = false
-            updateUI()
-            status.Text = "Status: COMPLETE!"
-            print("All 8 torch prompts processed!")
-        end
     end)
 end)
 
+--==================================================
 -- STOP
+--==================================================
+
 stop.MouseButton1Click:Connect(function()
     running = false
     updateUI()
 end)
 
--- CLOSE
 close.MouseButton1Click:Connect(function()
     running = false
     gui:Destroy()
