@@ -1,149 +1,245 @@
 
---// Rollback by Wuang - RGB Troll Edition
+--// Rollback by Wuang - Key System Edition
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
+local KEY = "wu4ngdz"
 local enabled = false
 
--- GUI
+-- ScreenGui
 local gui = Instance.new("ScreenGui")
 gui.Name = "RollbackByWuang"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Main Frame
-local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(220, 180)
-frame.Position = UDim2.new(0.5, -110, 0.5, -90)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Parent = gui
+local function round(object, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius)
+    corner.Parent = object
+end
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10)
-corner.Parent = frame
+local function makeButton(parent, text, position, size, color)
+    local button = Instance.new("TextButton")
+    button.Size = size
+    button.Position = position
+    button.BackgroundColor3 = color
+    button.Text = text
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 14
+    button.Parent = parent
+    round(button, 7)
+    return button
+end
 
--- RGB Border
-local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2.5
-stroke.Parent = frame
+-- KEY FRAME
+local keyFrame = Instance.new("Frame")
+keyFrame.Size = UDim2.fromOffset(280, 170)
+keyFrame.Position = UDim2.new(0.5, -140, 0.5, -85)
+keyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+keyFrame.BorderSizePixel = 0
+keyFrame.Parent = gui
+round(keyFrame, 10)
 
+local keyStroke = Instance.new("UIStroke")
+keyStroke.Thickness = 2.5
+keyStroke.Parent = keyFrame
+
+local keyTitle = Instance.new("TextLabel")
+keyTitle.Size = UDim2.new(1, 0, 0, 40)
+keyTitle.BackgroundTransparency = 1
+keyTitle.Text = "ROLLBACK BY WUANG"
+keyTitle.TextColor3 = Color3.new(1, 1, 1)
+keyTitle.Font = Enum.Font.GothamBold
+keyTitle.TextSize = 17
+keyTitle.Parent = keyFrame
+
+-- KEY INPUT
+local keyInput = Instance.new("TextBox")
+keyInput.Size = UDim2.new(1, -30, 0, 38)
+keyInput.Position = UDim2.fromOffset(15, 50)
+keyInput.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+keyInput.PlaceholderText = "Enter Key..."
+keyInput.Text = ""
+keyInput.TextColor3 = Color3.new(1, 1, 1)
+keyInput.PlaceholderColor3 = Color3.fromRGB(160, 160, 160)
+keyInput.Font = Enum.Font.Gotham
+keyInput.TextSize = 14
+keyInput.ClearTextOnFocus = false
+keyInput.Parent = keyFrame
+round(keyInput, 7)
+
+-- STATUS
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1, -20, 0, 20)
+status.Position = UDim2.fromOffset(10, 92)
+status.BackgroundTransparency = 1
+status.Text = "Enter your key"
+status.TextColor3 = Color3.fromRGB(200, 200, 200)
+status.Font = Enum.Font.Gotham
+status.TextSize = 12
+status.Parent = keyFrame
+
+-- CHECK KEY
+local check = makeButton(
+    keyFrame,
+    "CHECK KEY",
+    UDim2.fromOffset(15, 120),
+    UDim2.new(1, -30, 0, 38),
+    Color3.fromRGB(45, 140, 75)
+)
+
+-- MAIN MENU
+local function openMainMenu()
+    keyFrame.Visible = false
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.fromOffset(220, 180)
+    frame.Position = UDim2.new(0.5, -110, 0.5, -90)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    frame.BorderSizePixel = 0
+    frame.Active = true
+    frame.Parent = gui
+    round(frame, 10)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 2.5
+    stroke.Parent = frame
+
+    -- TITLE
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -45, 0, 40)
+    title.Position = UDim2.fromOffset(10, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "Rollback by Wuang"
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 16
+    title.Active = true
+    title.Parent = frame
+
+    -- CLOSE
+    local close = makeButton(
+        frame,
+        "X",
+        UDim2.new(1, -38, 0, 3),
+        UDim2.fromOffset(35, 35),
+        Color3.fromRGB(180, 45, 45)
+    )
+
+    -- ROLLBACK TOGGLE
+    local toggle = makeButton(
+        frame,
+        "ROLLBACK: OFF",
+        UDim2.fromOffset(15, 55),
+        UDim2.new(1, -30, 0, 40),
+        Color3.fromRGB(180, 45, 45)
+    )
+
+    toggle.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        toggle.Text = enabled and "ROLLBACK: ON" or "ROLLBACK: OFF"
+        toggle.BackgroundColor3 = enabled
+            and Color3.fromRGB(40, 170, 80)
+            or Color3.fromRGB(180, 45, 45)
+    end)
+
+    -- REJOIN SERVER
+    local rejoin = makeButton(
+        frame,
+        "REJOIN SERVER",
+        UDim2.fromOffset(15, 105),
+        UDim2.new(1, -30, 0, 40),
+        Color3.fromRGB(55, 100, 190)
+    )
+
+    rejoin.MouseButton1Click:Connect(function()
+        player:Kick("Rollback cái con cặc mấy thằng ngu")
+    end)
+
+    -- DRAG MENU
+    local dragging = false
+    local dragStart
+    local startPos
+
+    title.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (
+            input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch
+        ) then
+            local delta = input.Position - dragStart
+
+            frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    close.MouseButton1Click:Connect(function()
+        gui:Destroy()
+    end)
+
+    return stroke
+end
+
+-- VERIFY KEY
+local unlocked = false
+local mainStroke
+
+check.MouseButton1Click:Connect(function()
+    if unlocked then return end
+
+    if keyInput.Text == KEY then
+        unlocked = true
+        status.Text = "Key Correct!"
+        status.TextColor3 = Color3.fromRGB(50, 220, 100)
+
+        task.wait(0.4)
+        mainStroke = openMainMenu()
+    else
+        status.Text = "Invalid Key! Try Again."
+        status.TextColor3 = Color3.fromRGB(255, 60, 60)
+    end
+end)
+
+-- RGB ANIMATION
 local hue = 0
 
-local rgbConnection = RunService.RenderStepped:Connect(function(dt)
+RunService.RenderStepped:Connect(function(dt)
+    if not gui.Parent then return end
+
     hue = (hue + dt * 0.3) % 1
-    stroke.Color = Color3.fromHSV(hue, 1, 1)
-end)
+    local rgb = Color3.fromHSV(hue, 1, 1)
 
--- Title
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -45, 0, 40)
-title.Position = UDim2.fromOffset(10, 0)
-title.BackgroundTransparency = 1
-title.Text = "Rollback by Wuang"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 16
-title.Active = true
-title.Parent = frame
+    if keyFrame.Visible then
+        keyStroke.Color = rgb
+    end
 
--- Close X
-local close = Instance.new("TextButton")
-close.Size = UDim2.fromOffset(35, 35)
-close.Position = UDim2.new(1, -38, 0, 3)
-close.Text = "X"
-close.TextColor3 = Color3.new(1, 1, 1)
-close.BackgroundColor3 = Color3.fromRGB(180, 45, 45)
-close.Font = Enum.Font.GothamBold
-close.TextSize = 16
-close.Parent = frame
-
-Instance.new("UICorner", close).CornerRadius = UDim.new(0, 7)
-
-close.MouseButton1Click:Connect(function()
-    rgbConnection:Disconnect()
-    gui:Destroy()
-end)
-
--- Rollback ON/OFF
-local toggle = Instance.new("TextButton")
-toggle.Size = UDim2.new(1, -30, 0, 40)
-toggle.Position = UDim2.fromOffset(15, 55)
-toggle.BackgroundColor3 = Color3.fromRGB(180, 45, 45)
-toggle.Text = "ROLLBACK: OFF"
-toggle.TextColor3 = Color3.new(1, 1, 1)
-toggle.Font = Enum.Font.GothamBold
-toggle.TextSize = 14
-toggle.Parent = frame
-
-Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 7)
-
-toggle.MouseButton1Click:Connect(function()
-    enabled = not enabled
-
-    toggle.Text = enabled and "ROLLBACK: ON" or "ROLLBACK: OFF"
-
-    toggle.BackgroundColor3 = enabled
-        and Color3.fromRGB(40, 170, 80)
-        or Color3.fromRGB(180, 45, 45)
-end)
-
--- REJOIN SERVER (TROLL KICK)
-local rejoin = Instance.new("TextButton")
-rejoin.Size = UDim2.new(1, -30, 0, 40)
-rejoin.Position = UDim2.fromOffset(15, 105)
-rejoin.BackgroundColor3 = Color3.fromRGB(55, 100, 190)
-rejoin.Text = "REJOIN SERVER"
-rejoin.TextColor3 = Color3.new(1, 1, 1)
-rejoin.Font = Enum.Font.GothamBold
-rejoin.TextSize = 14
-rejoin.Parent = frame
-
-Instance.new("UICorner", rejoin).CornerRadius = UDim.new(0, 7)
-
-rejoin.MouseButton1Click:Connect(function()
-    player:Kick("Rollback cái con cặc mấy thằng ngu")
-end)
-
--- Drag Menu
-local dragging = false
-local dragStart
-local startPos
-
-title.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
+    if mainStroke and mainStroke.Parent then
+        mainStroke.Color = rgb
     end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (
-        input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch
-    ) then
-        local delta = input.Position - dragStart
-
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
-
-print("Rollback by Wuang RGB Troll Loaded!")
+print("Rollback by Wuang Key System Loaded!")
