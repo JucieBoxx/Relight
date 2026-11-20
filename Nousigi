@@ -1,0 +1,57 @@
+local RS  = game:GetService("ReplicatedStorage")
+local eps = RS.endpoints.client_to_server
+local Sell     = eps.sell_units
+local LockMany = eps.lock_unlock_units
+
+local function safeGet(t, k)
+    local ok, v = pcall(rawget, t, k); return ok and v or nil
+end
+
+local session
+for _, v in getgc(true) do
+    if type(v) == "table" then
+        local col = safeGet(v, "collection")
+        if type(col) == "table" then
+            local cpd = safeGet(col, "collection_profile_data")
+            if type(cpd) == "table" and type(safeGet(cpd, "owned_units")) == "table" then
+                session = v; break
+            end
+        end
+    end
+end
+
+if not session then return end
+
+local owned = safeGet(safeGet(session, "collection"), "collection_profile_data").owned_units
+
+local uuidsToSell = {}
+local unlockMap = {} 
+local hasLocked = false
+
+for uuid, u in pairs(owned) do
+    uuidsToSell[#uuidsToSell+1] = uuid
+    if u._locked == true or u._locked == 1 then
+        unlockMap[uuid] = false
+        hasLocked = true
+    end
+end
+
+if hasLocked then
+    pcall(function() 
+        return LockMany:InvokeServer(unlockMap) 
+    end)
+    task.wait(0.5)
+end
+
+if #uuidsToSell > 0 then
+    local ok, res = pcall(function() 
+        return Sell:InvokeServer(uuidsToSell) 
+    end)
+    
+    if not ok or res == false then
+        for _, uuid in ipairs(uuidsToSell) do
+            pcall(function() return Sell:InvokeServer({uuid}) end)
+            task.wait(0.2)
+        end
+    end
+end
