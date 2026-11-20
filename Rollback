@@ -1,8 +1,7 @@
 
---// Rollback by Wuang - RGB Edition
+--// Rollback by Wuang - RGB Troll Edition
 
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
@@ -34,9 +33,8 @@ stroke.Thickness = 2.5
 stroke.Parent = frame
 
 local hue = 0
-local rgbConnection
 
-rgbConnection = RunService.RenderStepped:Connect(function(dt)
+local rgbConnection = RunService.RenderStepped:Connect(function(dt)
     hue = (hue + dt * 0.3) % 1
     stroke.Color = Color3.fromHSV(hue, 1, 1)
 end)
@@ -53,7 +51,7 @@ title.TextSize = 16
 title.Active = true
 title.Parent = frame
 
--- Close Button
+-- Close X
 local close = Instance.new("TextButton")
 close.Size = UDim2.fromOffset(35, 35)
 close.Position = UDim2.new(1, -38, 0, 3)
@@ -67,13 +65,11 @@ close.Parent = frame
 Instance.new("UICorner", close).CornerRadius = UDim.new(0, 7)
 
 close.MouseButton1Click:Connect(function()
-    if rgbConnection then
-        rgbConnection:Disconnect()
-    end
+    rgbConnection:Disconnect()
     gui:Destroy()
 end)
 
--- Rollback Toggle
+-- Rollback ON/OFF
 local toggle = Instance.new("TextButton")
 toggle.Size = UDim2.new(1, -30, 0, 40)
 toggle.Position = UDim2.fromOffset(15, 55)
@@ -96,7 +92,7 @@ toggle.MouseButton1Click:Connect(function()
         or Color3.fromRGB(180, 45, 45)
 end)
 
--- Rejoin Button
+-- REJOIN SERVER (TROLL KICK)
 local rejoin = Instance.new("TextButton")
 rejoin.Size = UDim2.new(1, -30, 0, 40)
 rejoin.Position = UDim2.fromOffset(15, 105)
@@ -110,11 +106,7 @@ rejoin.Parent = frame
 Instance.new("UICorner", rejoin).CornerRadius = UDim.new(0, 7)
 
 rejoin.MouseButton1Click:Connect(function()
-    TeleportService:TeleportToPlaceInstance(
-        game.PlaceId,
-        game.JobId,
-        player
-    )
+    player:Kick("Rollback cái con cặc mấy thằng ngu")
 end)
 
 -- Drag Menu
@@ -154,4 +146,4 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
-print("Rollback by Wuang RGB Loaded!")
+print("Rollback by Wuang RGB Troll Loaded!")
