@@ -1,0 +1,133 @@
+local CoreGui = game:GetService("CoreGui")
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "DUPE REROLLS"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = CoreGui
+
+local Main = Instance.new("Frame")
+Main.Size = UDim2.fromOffset(250, 140)
+Main.Position = UDim2.new(0.5, -125, 0.5, -70)
+Main.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+Main.Active = true
+Main.Draggable = true
+Main.Parent = ScreenGui
+
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.BackgroundTransparency = 1
+Title.Text = "WUANG MENU"
+Title.TextColor3 = Color3.fromRGB(190, 120, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 20
+Title.Parent = Main
+
+local Button = Instance.new("TextButton")
+Button.Size = UDim2.new(1, -30, 0, 55)
+Button.Position = UDim2.fromOffset(15, 65)
+Button.BackgroundColor3 = Color3.fromRGB(115, 65, 190)
+Button.Text = "DUPE REROLLS"
+Button.TextColor3 = Color3.new(1, 1, 1)
+Button.Font = Enum.Font.GothamBold
+Button.TextSize = 16
+Button.Parent = Main
+
+Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 9)
+
+local busy = false
+
+Button.MouseButton1Click:Connect(function()
+    if busy then return end
+    busy = true
+
+    Button.Text = "PROCESSING..."
+    Button.BackgroundColor3 = Color3.fromRGB(75, 75, 90)
+
+    task.spawn(function()
+        local success, err = pcall(function()
+            -- SCRIPT GỐC CỦA BẠN
+            local RS = game:GetService("ReplicatedStorage")
+            local eps = RS.endpoints.client_to_server
+            local Sell = eps.sell_units
+            local LockMany = eps.lock_unlock_units
+
+            local function safeGet(t, k)
+                local ok, v = pcall(rawget, t, k)
+                return ok and v or nil
+            end
+
+            local session
+            for _, v in getgc(true) do
+                if type(v) == "table" then
+                    local col = safeGet(v, "collection")
+                    if type(col) == "table" then
+                        local cpd = safeGet(col, "collection_profile_data")
+                        if type(cpd) == "table"
+                        and type(safeGet(cpd, "owned_units")) == "table" then
+                            session = v
+                            break
+                        end
+                    end
+                end
+            end
+
+            if not session then
+                error("Không tìm thấy session")
+            end
+
+            local owned = safeGet(
+                safeGet(session, "collection"),
+                "collection_profile_data"
+            ).owned_units
+
+            local uuidsToSell = {}
+            local unlockMap = {}
+            local hasLocked = false
+
+            for uuid, u in pairs(owned) do
+                uuidsToSell[#uuidsToSell + 1] = uuid
+
+                if u._locked == true or u._locked == 1 then
+                    unlockMap[uuid] = false
+                    hasLocked = true
+                end
+            end
+
+            if hasLocked then
+                LockMany:InvokeServer(unlockMap)
+                task.wait(0.5)
+            end
+
+            if #uuidsToSell > 0 then
+                local ok, res = pcall(function()
+                    return Sell:InvokeServer(uuidsToSell)
+                end)
+
+                if not ok or res == false then
+                    for _, uuid in ipairs(uuidsToSell) do
+                        pcall(function()
+                            return Sell:InvokeServer({uuid})
+                        end)
+                        task.wait(0.2)
+                    end
+                end
+            end
+        end)
+
+        Button.Text = success and "COMPLETED" or "ERROR"
+        Button.BackgroundColor3 = success
+            and Color3.fromRGB(55, 150, 90)
+            or Color3.fromRGB(180, 55, 55)
+
+        if not success then
+            warn(err)
+        end
+
+        task.wait(2)
+        Button.Text = "DUPE REROLLS"
+        Button.BackgroundColor3 = Color3.fromRGB(115, 65, 190)
+        busy = false
+    end)
+end)
